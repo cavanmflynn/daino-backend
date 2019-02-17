@@ -1,0 +1,12 @@
+server_port: 3000
+rpc_provider: https://dai.poa.network
+github:
+  client_id: github_client_id
+  client_secret: github_client_secret
+twitter:
+  client_id: twitter_client_id
+  client_secret: twitter_client_secret
+  bot_access_token_id: twitter_bot_access_token_id
+  bot_access_token_secret: twitter_bot_access_token_secret
+wallet_seed: xdai_wallet_seed
+chain_watcher_interval_ms: 5000

@@ -1,0 +1,8 @@
+node_modules/
+.env
+build/
+volumes/
+.DS_Store
+*.log
+logs
+config/default.yaml
