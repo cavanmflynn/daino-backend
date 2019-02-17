@@ -14,8 +14,6 @@ export class XDaiChainWatcher {
   private static _twitterClient: TwitterSDK;
 
   public static init() {
-    const { botId, botSecret } = config.twitter();
-    this._twitterClient = Twitter.client(botId, botSecret);
     setInterval(this.compareBalances, config.chainWatcherIntervalMs());
 
     // Initial call
@@ -61,7 +59,9 @@ export class XDaiChainWatcher {
     const balanceResults: { [address: string]: number } = {};
     balanceResultArrays.filter(Boolean).forEach(arr => {
       arr.forEach(result => {
-        balanceResults[result.account.toLowerCase()] = result.balance;
+        balanceResults[result.account.toLowerCase()] = Number(
+          new Big(result.balance).div(10e18),
+        );
       });
     });
 
@@ -77,18 +77,17 @@ export class XDaiChainWatcher {
         shouldUpdateBalance = true;
         Transaction.set(Website.TWITTER, user.username, {
           dateString: new Date(Date.now()).toISOString(),
-          amount: Number(
-            new Big(balanceResults[user.address] - user.balance).div(10e18),
-          ),
+          amount: balanceResults[user.address] - user.balance,
           inbound: true,
         });
         if (!user.hasLoggedIn) {
-          this._twitterClient.post(
+          const { botId, botSecret } = config.twitter();
+          Twitter.client(botId, botSecret).post(
             'statuses/update',
             {
               status: `@${
                 user.username
-              } You've received a tip on Daino! Claim your funds here - TODO`,
+              } You've received a tip on Daino! Claim your funds once we host this app :)`,
             },
             (error, tweet, response) => {
               if (error) throw error;
@@ -102,9 +101,7 @@ export class XDaiChainWatcher {
         shouldUpdateBalance = true;
         Transaction.set(Website.TWITTER, user.username, {
           dateString: new Date(Date.now()).toISOString(),
-          amount: Number(
-            new Big(user.balance - balanceResults[user.address]).div(10e18),
-          ),
+          amount: user.balance - balanceResults[user.address],
           inbound: false,
         });
       }
@@ -112,7 +109,7 @@ export class XDaiChainWatcher {
       if (shouldUpdateBalance) {
         const updatedUser = {
           ...user,
-          balance: Number(new Big(balanceResults[user.address]).div(10e18)),
+          balance: balanceResults[user.address],
         };
         User.update(Website.TWITTER, user.username, updatedUser);
       }
@@ -132,9 +129,7 @@ export class XDaiChainWatcher {
         shouldUpdateBalance = true;
         Transaction.set(Website.GITHUB, user.username, {
           dateString: new Date(Date.now()).toISOString(),
-          amount: Number(
-            new Big(balanceResults[user.address] - user.balance).div(10e18),
-          ),
+          amount: balanceResults[user.address] - user.balance,
           inbound: true,
         });
       } else if (balanceResults[user.address] < user.balance) {
@@ -142,9 +137,7 @@ export class XDaiChainWatcher {
         shouldUpdateBalance = true;
         Transaction.set(Website.GITHUB, user.username, {
           dateString: new Date(Date.now()).toISOString(),
-          amount: Number(
-            new Big(user.balance - balanceResults[user.address]).div(10e18),
-          ),
+          amount: user.balance - balanceResults[user.address],
           inbound: false,
         });
       }
@@ -152,7 +145,7 @@ export class XDaiChainWatcher {
       if (shouldUpdateBalance) {
         const updatedUser = {
           ...user,
-          balance: Number(new Big(balanceResults[user.address]).div(10e18)),
+          balance: balanceResults[user.address],
         };
         User.update(Website.GITHUB, user.username, updatedUser);
       }
